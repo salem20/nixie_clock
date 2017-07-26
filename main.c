@@ -36,13 +36,15 @@
 #include "app_util_platform.h"
 #include "bsp.h"
 #include "bsp_btn_ble.h"
+#include "nrf_log.h"
+#include "nrf_delay.h"
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                           /**< Include the service_changed characteristic. If not enabled, the server's database cannot be changed for the lifetime of the device. */
 
 #define CENTRAL_LINK_COUNT              0                                           /**< Number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT           1                                           /**< Number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define DEVICE_NAME                     "Nordic_UART"                               /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Nixie clock"                               /**< Name of device. Will be included in the advertising data. */
 #define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
 
 #define APP_ADV_INTERVAL                64                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
@@ -66,6 +68,75 @@ static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
 static ble_uuid_t                       m_adv_uuids[] = {{BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}};  /**< Universally unique service identifier. */
 
+/** Structure holding time. */
+typedef struct  __attribute__ ((__packed__)) {
+	/// year, in ex 2017
+	uint16_t year;
+	/// month 1..12
+	uint8_t month;
+	/// day of month 1..31
+	uint8_t day;
+	/// hours: 0..23
+	uint8_t hours;
+	/// minutes: 0..59
+	uint8_t minutes;
+	/// seconds: 0..59
+	uint8_t seconds;
+} ClkTime;
+
+
+/// Date for starting session by button
+static ClkTime actualTime = {0};
+
+/// Array with number of days for each month (index is equal to month number)
+static uint8_t daysInMonth[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+APP_TIMER_DEF(updateActualTimeId);
+
+/**
+ * This function update actual time every second.
+ */
+static void updateActualTime(void *p_context) {
+
+	if (60 == ++actualTime.seconds) {
+		actualTime.seconds = 0;
+		if (60 == ++actualTime.minutes) {
+			actualTime.minutes = 0;
+			if (24 == ++actualTime.hours) {
+				actualTime.hours = 0;
+				if (2 != actualTime.month) {
+					if (++actualTime.day
+							== (daysInMonth[actualTime.month] + 1)) {
+						actualTime.day = 1;
+						if (13 == ++actualTime.month) {
+							actualTime.month = 1;
+							++actualTime.year;
+						}
+					}
+				} else if ((0 == actualTime.year % 4
+						&& 0 != actualTime.year % 100)
+						|| 0 == actualTime.year % 400) {
+					if (++actualTime.day
+							== (daysInMonth[actualTime.month] + 2)) {
+						actualTime.day = 1;
+						++actualTime.month;
+					}
+				} else if (!((0 == actualTime.year % 4
+						&& 0 != actualTime.year % 100)
+						|| 0 == actualTime.year % 400)) {
+					if (++actualTime.day
+							== (daysInMonth[actualTime.month] + 1)) {
+						actualTime.day = 1;
+						++actualTime.month;
+					}
+				}
+			}
+		}
+	}
+	NRF_LOG_PRINTF("%d-%d-%d\t%d:%d:%d\r\n", actualTime.year,
+				actualTime.month, actualTime.day, actualTime.hours,
+				actualTime.minutes, actualTime.seconds);
+}
 
 /**@brief Function for assert macro callback.
  *
@@ -126,7 +197,14 @@ static void gap_params_init(void)
 /**@snippet [Handling the data received over BLE] */
 static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
- //do sth after receive data
+	if(length == 7){
+		actualTime.year = (p_data[0] << 8) + p_data[1];
+		actualTime.month = p_data[2];
+		actualTime.day = p_data[3];
+		actualTime.hours = p_data[4];
+		actualTime.minutes = p_data[5];
+		actualTime.seconds = p_data[6];
+	}
 }
 /**@snippet [Handling the data received over BLE] */
 
@@ -239,7 +317,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             APP_ERROR_CHECK(err_code);
             break;
         case BLE_ADV_EVT_IDLE:
-            sleep_mode_enter();
+//            sleep_mode_enter();
             break;
         default:
             break;
@@ -428,13 +506,15 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
 /**@brief Application main function.
  */
 int main(void)
 {
+	nrf_delay_ms(100);
     uint32_t err_code;
     bool erase_bonds;
+
+    NRF_LOG_INIT();
 
     // Initialize.
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
@@ -446,7 +526,14 @@ int main(void)
     advertising_init();
     conn_params_init();
 
-    err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+    err_code = app_timer_create(&updateActualTimeId, APP_TIMER_MODE_REPEATED,
+			updateActualTime);
+	APP_ERROR_CHECK(err_code);
+
+	err_code = app_timer_start(updateActualTimeId, APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER), NULL);
+	APP_ERROR_CHECK(err_code);
+
+	err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
     
     // Enter main loop.
