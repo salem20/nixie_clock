@@ -57,6 +57,7 @@ $(abspath sdk/components/drivers_nrf/pstorage/pstorage.c) \
 $(abspath sdk/bsp/bsp.c) \
 $(abspath sdk/bsp/bsp_btn_ble.c) \
 $(abspath main.c) \
+$(abspath nixie_clock.c) \
 $(abspath sdk/components/ble/common/ble_advdata.c) \
 $(abspath sdk/components/ble/ble_advertising/ble_advertising.c) \
 $(abspath sdk/components/ble/common/ble_conn_params.c) \
