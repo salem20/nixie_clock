@@ -72,6 +72,8 @@ public class DeviceControlActivity extends Activity {
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
 
+
+
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -193,15 +195,17 @@ public class DeviceControlActivity extends Activity {
                 int year = cal.get(Calendar.YEAR);
                 packetBuffer.put((byte) (year >> 8));
                 packetBuffer.put((byte) year);
-                packetBuffer.put((byte) cal.get(Calendar.MONTH));
+                packetBuffer.put((byte) (cal.get(Calendar.MONTH) + 1));
                 packetBuffer.put((byte) cal.get(Calendar.DAY_OF_MONTH));
                 packetBuffer.put((byte) cal.get(Calendar.HOUR_OF_DAY));
                 packetBuffer.put((byte) cal.get(Calendar.MINUTE));
                 packetBuffer.put((byte) cal.get(Calendar.SECOND));
 
-                mClockStatus.setText(R.string.clock_configured);
-
-//                return mBluetoothLeService.writeCharacteristic(, packetBuffer.array());
+                if(mBluetoothLeService.writeRXCharacteristic( packetBuffer.array()) == true) {
+                    mClockStatus.setText(R.string.clock_configured);
+                } else {
+                    mClockStatus.setText(R.string.clock_not_configured);
+                }
             }
         });
 

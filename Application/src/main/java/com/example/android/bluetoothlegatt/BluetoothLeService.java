@@ -66,6 +66,9 @@ public class BluetoothLeService extends Service {
     public final static UUID UUID_HEART_RATE_MEASUREMENT =
             UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
 
+    public static final UUID RX_SERVICE_UUID = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+    public static final UUID RX_CHAR_UUID = UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
+
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -283,30 +286,29 @@ public class BluetoothLeService extends Service {
     }
 
 
-    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value){
 
-//        //check mBluetoothGatt is available
-//        if (mBluetoothGatt == null) {
-//            Log.e(TAG, "lost connection");
-//            return false;
-//        }
-//        BluetoothGattService Service = mBluetoothGatt.getService(your Services);
-//        if (mBluetoothLeService == null) {
-//            Log.e(TAG, "service not found!");
-//            return false;
-//        }
-//        BluetoothGattCharacteristic charac = mBluetoothLeService
-//                .getCharacteristic(characteristic);
-//        if (charac == null) {
-//            Log.e(TAG, "char not found!");
-//            return false;
-//        }
-//
-//        charac.setValue(value);
-//        boolean status = mBluetoothGatt.writeCharacteristic(charac);
-//        return status;
-        return true;
+    public boolean writeRXCharacteristic(byte[] value)
+    {
+        BluetoothGattService RxService = mBluetoothGatt.getService(RX_SERVICE_UUID);
+//        showMessage("mBluetoothGatt null"+ mBluetoothGatt);
+        if (RxService == null) {
+            Log.e(TAG, "Rx service not found!");
+//            broadcastUpdate(DEVICE_DOES_NOT_SUPPORT_UART);
+            return false;
+        }
+        BluetoothGattCharacteristic RxChar = RxService.getCharacteristic(RX_CHAR_UUID);
+        if (RxChar == null) {
+            Log.e(TAG, "Rx charateristic not found!");
+//            broadcastUpdate(DEVICE_DOES_NOT_SUPPORT_UART);
+            return false;
+        }
+        RxChar.setValue(value);
+        boolean status = mBluetoothGatt.writeCharacteristic(RxChar);
+
+        Log.d(TAG, "write TXchar - status=" + status);
+        return status;
     }
+
 
     /**
      * Enables or disables notification on a give characteristic.
