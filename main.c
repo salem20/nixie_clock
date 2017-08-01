@@ -133,6 +133,7 @@ static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t lengt
 {
 	/// Date for starting session by button
 	if(length == 7){
+		NRF_LOG_PRINTF("Received data over BLE!\n");
 		ClkTime receiveTime = {0};
 		receiveTime.year = (p_data[0] << 8) + p_data[1];
 		receiveTime.month = p_data[2];
@@ -274,12 +275,14 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
+        	NRF_LOG_PRINTF("BLE_GAP_EVT_CONNECTED\n");
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             break;
             
         case BLE_GAP_EVT_DISCONNECTED:
+        	NRF_LOG_PRINTF("BLE_GAP_EVT_DISCONNECTED\n");
             err_code = bsp_indication_set(BSP_INDICATE_IDLE);
             APP_ERROR_CHECK(err_code);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
