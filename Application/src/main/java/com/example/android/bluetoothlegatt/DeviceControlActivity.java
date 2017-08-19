@@ -67,7 +67,6 @@ public class DeviceControlActivity extends Activity {
             new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     private boolean mConnected = false;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
-    private String clockStatus;
 
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
@@ -117,7 +116,7 @@ public class DeviceControlActivity extends Activity {
                 // Show all the supported services and characteristics on the user interface.
                 displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+//                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
         }
     };
@@ -201,7 +200,7 @@ public class DeviceControlActivity extends Activity {
                 packetBuffer.put((byte) cal.get(Calendar.MINUTE));
                 packetBuffer.put((byte) cal.get(Calendar.SECOND));
 
-                if(mBluetoothLeService.writeRXCharacteristic( packetBuffer.array()) == true) {
+                if(mBluetoothLeService.writeRXCharacteristic( packetBuffer.array()) == true && mBluetoothLeService.is_connected()) {
                     mClockStatus.setText(R.string.clock_configured);
                 } else {
                     mClockStatus.setText(R.string.clock_not_configured);
@@ -272,11 +271,11 @@ public class DeviceControlActivity extends Activity {
         });
     }
 
-    private void displayData(String data) {
-        if (data != null) {
+//    private void displayData(String data) {
+//        if (data != null) {
 //            mDataField.setText(data);
-        }
-    }
+//        }
+//    }
 
     // Demonstrates how to iterate through the supported GATT Services/Characteristics.
     // In this sample, we populate the data structure that is bound to the ExpandableListView

@@ -270,6 +270,10 @@ public class BluetoothLeService extends Service {
         mBluetoothGatt = null;
     }
 
+    public boolean is_connected(){
+        return (mConnectionState == STATE_CONNECTED);
+    }
+
     /**
      * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
      * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}

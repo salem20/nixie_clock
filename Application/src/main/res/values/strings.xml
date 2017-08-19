@@ -17,11 +17,12 @@
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="label_data">Data:</string>
     <string name="label_device_address">Device address:</string>
+    <string name="target_device_name">Nixie clock</string>
     <string name="label_state">State:</string>
     <string name="no_data">No data</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
-    <string name="title_devices">BLE Device Scan</string>
+    <string name="title_devices">Device Scan</string>
     <string name="error_bluetooth_not_supported">Bluetooth not supported.</string>
 
     <string name="label_status">Status:</string>
